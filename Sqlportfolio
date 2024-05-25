@@ -1,0 +1,84 @@
+/*All users who joined the quarter after the start of the pandemic */
+SELECT USER_ID,
+JOIN_DATE,
+MONTHNAME(JOIN_DATE) AS JOINMONTH,
+QUARTER(JOIN_DATE) AS JOINQUARTER,
+YEAR (JOIN_DATE) AS JOINYEAR
+FROM USERBASE
+WHERE YEAR (JOIN_DATE) = 2020 AND QUARTER(JOIN_DATE) = 2
+
+/* When customers join Netflix, they have a 30 day free trial from the date that they joined. May you return a list of all customers who had a 30 day free trial last year?*/
+SELECT *,
+DATEADD (DAY,30,JOIN_DATE) AS FREETRAILEXPIREDATE,
+YEAR (DATEADD (DAY,30,JOIN_DATE)) AS TRAILEXPIREYEAR
+FROM USERBASE
+WHERE YEAR (DATEADD (DAY,30,JOIN_DATE)) = 2023
+
+/* We are running a cross-promotion marketing campaign in specific countries to get more non-premium Visa and Mastercard subscribers to opt in for our emails. The countries we are looking to target are those who have a conversion premium compared to the US dollar since these countries have higher prices compared to others.  May you provide the following for these subscribers:
+
+• Names and account ID 
+
+• Their country of residence
+
+• Their local currency
+
+• Conversion rate
+
+• Conversion rate premium compared to the US (i.e. if Euro’s conversion is 1.26, their premium would be 26% compared to the US) */
+
+
+select userbase.user_id,
+
+sub_demo.sub_fname,
+
+sub_demo.sub_lname,
+
+userbase.country,
+
+email_sub.id,
+
+cof.cof_type,
+
+netflix_prices.conversion,
+
+netflix_prices.conversion-1 as Conversion_Premium
+
+from userbase left join email_sub on email_sub.id=userbase.user_id
+
+left join cof on cof.cc_id=userbase.user_id
+
+left join netflix_prices on netflix_prices.country=userbase.country
+
+left join sub_demo on sub_demo.sub_id=userbase.user_id
+
+where email_sub.id is null and cof.cof_type in ('VISA','MC') and netflix_prices.conversion > 1
+
+
+/* We are considering a 15% increase for all plans for our top 10 countries with the largest content offering (excluding our top markets since we just did a price increase in our top markets). Yet, we only want to increase in these countries if the 15% increase does not exceed $1.50 per month. Return these countries with what the additional increase would be along with their new proposed prices and the size of their content.*/ 
+
+select *,
+
+no_of_tv_shows+no_of_movies as Total_Content,
+
+basic_cost_per_month*1.15 as New_Basic,
+
+standard_cost_per_month*1.15 as New_Standard,
+
+premium_cost_per_month*1.15 as New_Premium,
+
+basic_cost_per_month*.15 as Basic_Discount,
+
+standard_cost_per_month*.15 as Standard_Discount,
+
+premium_cost_per_month*.15 as Premium_Discount
+
+from netflix_countries
+
+where basic_cost_per_month*.15 <= 1.50 and standard_cost_per_month*.15 <= 1.50 and
+
+premium_cost_per_month*.15 <= 1.50 and country not in ('United States','Canada')
+
+order by Total_Content desc
+
+limit 10
+
